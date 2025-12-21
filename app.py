@@ -189,14 +189,19 @@ Official Helpline / हेल्पलाइन:
 # 3. Backend Logic (API endpoints)
 params = st.query_params
 if "action" in params:
-    if params["action"] == "init":
+    action = params["action"]
+    
+    # PEHLA CHECK: Initialization ke liye
+    if action == "init":
         response = st.session_state.chat_session.send_message(SYSTEM_PROMPT)
-        st.write(response.text) # JSON ki jagah direct text
+        st.write(response.text)  # <--- Yahan st.json nahi, st.write hona chahiye
         st.stop()
-    elif params["action"] == "chat":
-        user_msg = params.get("msg", "hello")
+        
+    # DUSRA CHECK: Chat message ke liye
+    elif action == "chat":
+        user_msg = params.get("msg", "")
         response = st.session_state.chat_session.send_message(user_msg)
-        st.write(response.text)
+        st.write(response.text)  # <--- Yahan bhi st.write hona chahiye
         st.stop()
 
 # 4. UI Display
@@ -209,3 +214,4 @@ if os.path.exists(html_path):
         st.components.v1.html(f.read(), height=800)
 else:
     st.error("static/index.html file nahi mili!")
+
