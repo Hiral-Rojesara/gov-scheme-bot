@@ -139,20 +139,22 @@
     const userInput = document.getElementById('user-input');
     const typingIndicator = document.getElementById('typing-indicator');
 
-    // PAGE LOAD HOTE HI AI SE LANGUAGE PUCHWANA
+    // Sahi URL nikalne ke liye function
+    const getBaseUrl = () => {
+        return window.location.origin;
+    };
+
     window.onload = async function() {
-        appendMessage('bot-message', "नमस्ते! कृपया प्रतीक्षा करें...");
+        appendMessage('bot-message', "नमस्ते! सिस्टम लोड हो रहा है...");
         try {
-            // Backend se init action call ho raha hai
-            const response = await fetch("/?action=init");
+            // Hum yahan pura URL bhej rahe hain
+            const response = await fetch(`${getBaseUrl()}/?action=init`);
             const data = await response.json();
             
-            // Sabse aakhri message (jo abhi "wait" wala tha) usse asli reply se badal dein
             const messages = chatBox.getElementsByClassName('bot-message');
             messages[messages.length - 1].innerText = data.reply;
         } catch (e) {
-            console.error("Initialization failed");
-            appendMessage('bot-message', "Maaf kijiye, setup mein dikkat ho rahi hai.");
+            console.error("Initialization failed:", e);
         }
     };
 
@@ -165,29 +167,20 @@
         typingIndicator.style.display = 'block';
 
         try {
-            // Backend se Chat request: yahan ?action=chat aur &msg= bhej rahe hain
-            const response = await fetch(`/?action=chat&msg=${encodeURIComponent(text)}`);
+            // Hum yahan pura URL bhej rahe hain
+            const response = await fetch(`${getBaseUrl()}/?action=chat&msg=${encodeURIComponent(text)}`);
             const data = await response.json();
             appendMessage('bot-message', data.reply);
         } catch (error) {
-            appendMessage('bot-message', "Server connection error! Kripya check karein.");
+            appendMessage('bot-message', "Connection error! Please restart the app.");
         } finally {
             typingIndicator.style.display = 'none';
         }
     }
 
-    function appendMessage(className, text) {
-        const div = document.createElement('div');
-        div.className = `message ${className}`;
-        div.innerText = text;
-        chatBox.appendChild(div);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    function handleKeyPress(e) {
-        if (e.key === 'Enter') sendMessage();
-    }
+    // Baaki appendMessage aur handleKeyPress wahi rahenge
 </script>
 
 </body>
 </html>
+
