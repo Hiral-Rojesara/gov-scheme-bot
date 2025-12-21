@@ -1,13 +1,26 @@
 import streamlit as st
 import google.generativeai as genai
 import json
+import os
 
 # 1. API Configuration
+if "GEMINI_API_KEY" not in st.secrets:
+    st.error("Secrets mein GEMINI_API_KEY nahi mili!")
+    st.stop()
+
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# 2. System Prompt
-SYSTEM_PROMPT = """You are AI Government Scheme Copilot for India.
+# 2. Aapka Pura System Prompt (Jo aapne pehle diya tha)
+SYSTEM_PROMPT = """
+You are AI Government Scheme Copilot for India. 
+Follow these rules strictly:
+1. Always start by asking Language Selection (1-15 options).
+2. Ask details one by one (State, then Age, then Occupation).
+3. Use simple Hindi/Regional language.
+4. Show 3-5 official schemes with Benefits and Documents.
+5. Provide Disclaimer at the end.
+You are AI Government Scheme Copilot for India.
 
 Purpose / उद्देश्य:
 - Guide citizens about only officially announced Central and State Government schemes.
@@ -175,31 +188,41 @@ Official Helpline / हेल्पलाइन:
 - Short, clear, step-by-step responses  
 - User feels control & comfort  
 - Low Digital Literacy Friendly approach
+
 """
 
-# 3. Session State for Chat History
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# 3. Session State for Chat Memory
+if "chat_session" not in st.session_state:
+    # Chat shuru hote hi System Prompt bhej dein taaki AI ko rules yaad rahein
+    st.session_state.chat_session = model.start_chat(history=[])
+    st.session_state.initialized = False
 
-# 4. API Endpoint Logic (Jab HTML Button click hoga)
-# Hum query_params ka use karke JSON response return karenge
-params = st.query_params
-if "chat" in params:
-    # Query se message uthao
-    user_input = params.get("chat")
+# 4. API Endpoint Logic
+query_params = st.query_params
+
+if "action" in query_params:
+    action = query_params["action"]
     
-    # Gemini se answer lo
-    chat = model.start_chat(history=[])
-    response = chat.send_message(f"{SYSTEM_PROMPT}\nUser: {user_input}")
-    
-    # JSON response dikhao aur ruk jao
-    st.json({"reply": response.text})
-    st.stop()
+    if action == "init" and not st.session_state.initialized:
+        # Pehla message jo AI khud bhejega (Language Selection)
+        response = st.session_state.chat_session.send_message(SYSTEM_PROMPT)
+        st.session_state.initialized = True
+        st.json({"reply": response.text})
+        st.stop()
+        
+    elif action == "chat":
+        user_msg = query_params.get("msg", "")
+        response = st.session_state.chat_session.send_message(user_msg)
+        st.json({"reply": response.text})
+        st.stop()
 
-# 5. UI Display (HTML render karna)
-st.title("🇮🇳 Govt Scheme Copilot")
-with open("static/index.html", "r", encoding="utf-8") as f:
-    html_code = f.read()
+# 5. UI Hosting
+st.set_page_config(page_title="Gov Scheme Bot", layout="centered")
+current_dir = os.path.dirname(__file__)
+html_path = os.path.join(current_dir, "static", "index.html")
 
-    st.components.v1.html(html_code, height=700, scrolling=True)
-
+if os.path.exists(html_path):
+    with open(html_path, "r", encoding="utf-8") as f:
+        st.components.v1.html(f.read(), height=800)
+else:
+    st.error("static/index.html nahi mili!")
