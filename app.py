@@ -7,7 +7,7 @@ genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 # 2. System Prompt
-SYSTEM_PROMPT = "You are AI Government Scheme Copilot for India.
+SYSTEM_PROMPT = '''You are AI Government Scheme Copilot for India.
 
 Purpose / उद्देश्य:
 - Guide citizens about only officially announced Central and State Government schemes.
@@ -200,4 +200,5 @@ if "chat" in params:
 st.title("🇮🇳 Govt Scheme Copilot")
 with open("static/index.html", "r", encoding="utf-8") as f:
     html_code = f.read()
+
     st.components.v1.html(html_code, height=700, scrolling=True)
