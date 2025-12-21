@@ -11,15 +11,17 @@ if "GEMINI_API_KEY" not in st.secrets:
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# 2. Aapka Pura System Prompt (Jo aapne pehle diya tha)
+# 2. SYSTEM_PROMPT (Wahi rahega jo aapne diya hai)
 SYSTEM_PROMPT = """
-You are AI Government Scheme Copilot for India. 
-Follow these rules strictly:
-1. Always start by asking Language Selection (1-15 options).
-2. Ask details one by one (State, then Age, then Occupation).
+You are AI Government Scheme Copilot for India.
+Purpose: Guide citizens about officially announced Central and State Government schemes.
+Strict Rules:
+1. Start with Language Selection (1-15 options).
+2. Ask details one by one (State, Age, Occupation, etc.).
 3. Use simple Hindi/Regional language.
-4. Show 3-5 official schemes with Benefits and Documents.
+4. Show 3-5 schemes with Eligibility, Benefits, and Documents.
 5. Provide Disclaimer at the end.
+(Include your full 14-point detailed prompt here inside these quotes)
 You are AI Government Scheme Copilot for India.
 
 Purpose / उद्देश्य:
@@ -193,15 +195,15 @@ Official Helpline / हेल्पलाइन:
 
 # 3. Session State for Chat Memory
 if "chat_session" not in st.session_state:
-    # Chat shuru hote hi System Prompt bhej dein taaki AI ko rules yaad rahein
     st.session_state.chat_session = model.start_chat(history=[])
     st.session_state.initialized = False
 
 # 4. API Endpoint Logic
-query_params = st.query_params
+# Fix: st.query_params ko sahi se access karne ke liye
+params = st.query_params
 
-if "action" in query_params:
-    action = query_params["action"]
+if "action" in params:
+    action = params["action"]
     
     if action == "init" and not st.session_state.initialized:
         # Pehla message jo AI khud bhejega (Language Selection)
@@ -211,7 +213,8 @@ if "action" in query_params:
         st.stop()
         
     elif action == "chat":
-        user_msg = query_params.get("msg", "")
+        user_msg = params.get("msg", "")
+        # Memory ke saath message bhejna
         response = st.session_state.chat_session.send_message(user_msg)
         st.json({"reply": response.text})
         st.stop()
@@ -223,6 +226,7 @@ html_path = os.path.join(current_dir, "static", "index.html")
 
 if os.path.exists(html_path):
     with open(html_path, "r", encoding="utf-8") as f:
-        st.components.v1.html(f.read(), height=800)
+        # Height thodi badha di hai taaki scroller na aaye
+        st.components.v1.html(f.read(), height=800, scrolling=True)
 else:
-    st.error("static/index.html nahi mili!")
+    st.error("static/index.html file 'static' folder ke andar nahi mili!")
