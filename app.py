@@ -1,19 +1,22 @@
 import streamlit as st
 import google.generativeai as genai
-import json
 import os
 
-# 1. API Configuration
+# 1. API Config
 if "GEMINI_API_KEY" not in st.secrets:
-    st.error("Secrets mein GEMINI_API_KEY nahi mili!")
+    st.error("Secrets mein API Key nahi hai!")
     st.stop()
 
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# 2. SYSTEM_PROMPT (Triple Quotes sahi se lagaye gaye hain)
-SYSTEM_PROMPT = """
-You are AI Government Scheme Copilot for India.
+# Session state setup
+if "chat_session" not in st.session_state:
+    st.session_state.chat_session = model.start_chat(history=[])
+    st.session_state.initialized = False
+
+# 2. SYSTEM_PROMPT (Shortened for brevity, paste your 14 points here)
+SYSTEM_PROMPT = """You are AI Government Scheme Copilot for India.
 
 Purpose / उद्देश्य:
 - Guide citizens about only officially announced Central and State Government schemes.
@@ -183,41 +186,26 @@ Official Helpline / हेल्पलाइन:
 - Low Digital Literacy Friendly approach
 """
 
-# 3. Session State for Chat Memory
-if "chat_session" not in st.session_state:
-    st.session_state.chat_session = model.start_chat(history=[])
-    st.session_state.initialized = False
-
-# 4. API Endpoint Logic
+# 3. Backend Logic (API endpoints)
 params = st.query_params
 if "action" in params:
-    action = params["action"]
-    if action == "init" and not st.session_state.initialized:
+    if params["action"] == "init":
         response = st.session_state.chat_session.send_message(SYSTEM_PROMPT)
-        st.session_state.initialized = True
-        st.json({"reply": response.text})
+        st.write(response.text) # JSON ki jagah direct text
         st.stop()
-    elif action == "chat":
-        user_msg = params.get("msg", "")
+    elif params["action"] == "chat":
+        user_msg = params.get("msg", "hello")
         response = st.session_state.chat_session.send_message(user_msg)
-        st.json({"reply": response.text})
+        st.write(response.text)
         st.stop()
 
-# 5. UI Hosting
-st.set_page_config(page_title="Gov Scheme Bot", layout="centered")
-
-# Sabse upar ye line add karein taaki error na aaye
-if "initialized" not in st.session_state:
-    st.session_state.initialized = False
-
-current_dir = os.path.dirname(__file__)
-html_path = os.path.join(current_dir, "static", "index.html")
+# 4. UI Display
+st.set_page_config(page_title="Scheme Sahayak", layout="centered")
+html_path = os.path.join(os.path.dirname(__file__), "static", "index.html")
 
 if os.path.exists(html_path):
     with open(html_path, "r", encoding="utf-8") as f:
-        html_code = f.read()
-        # Height aur width fix karein
-        st.components.v1.html(html_code, height=700)
+        # Height aur width check karein
+        st.components.v1.html(f.read(), height=800)
 else:
-    st.error("static/index.html nahi mili!")
-
+    st.error("static/index.html file nahi mili!")
