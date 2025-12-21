@@ -75,7 +75,7 @@
             background: #e9ecef;
             color: #333;
             border-bottom-left-radius: 2px;
-            white-space: pre-wrap; /* Preserve formatting from Gemini */
+            white-space: pre-wrap;
         }
 
         #input-area {
@@ -108,7 +108,6 @@
             opacity: 0.8;
         }
 
-        /* Loading Spinner */
         .typing {
             font-size: 0.8em;
             color: #888;
@@ -125,8 +124,7 @@
     </div>
     
     <div id="chat-box">
-        <div class="message bot-message">नमस्ते! मैं आपका सरकारी योजना सहायक हूँ। आपको किस तरह की योजना के बारे में जानना है? (उदा. किसान, छात्र, महिलाएं)</div>
-    </div>
+        </div>
 
     <div class="typing" id="typing-indicator">AI सोच रहा है...</div>
 
@@ -141,31 +139,38 @@
     const userInput = document.getElementById('user-input');
     const typingIndicator = document.getElementById('typing-indicator');
 
-    function handleKeyPress(e) {
-        if (e.key === 'Enter') sendMessage();
-    }
+    // PAGE LOAD HOTE HI AI SE LANGUAGE PUCHWANA
+    window.onload = async function() {
+        appendMessage('bot-message', "नमस्ते! कृपया प्रतीक्षा करें...");
+        try {
+            // Backend se init action call ho raha hai
+            const response = await fetch("/?action=init");
+            const data = await response.json();
+            
+            // Sabse aakhri message (jo abhi "wait" wala tha) usse asli reply se badal dein
+            const messages = chatBox.getElementsByClassName('bot-message');
+            messages[messages.length - 1].innerText = data.reply;
+        } catch (e) {
+            console.error("Initialization failed");
+            appendMessage('bot-message', "Maaf kijiye, setup mein dikkat ho rahi hai.");
+        }
+    };
 
     async function sendMessage() {
         const text = userInput.value.trim();
         if (!text) return;
 
-        // 1. User Message add karein
         appendMessage('user-message', text);
         userInput.value = '';
-        
-        // 2. Loading dikhayein
         typingIndicator.style.display = 'block';
 
         try {
-            // 3. Streamlit Backend ko call karein
-            // Humne app.py mein /?chat=... set kiya hai
-            const response = await fetch(`/?chat=${encodeURIComponent(text)}`);
+            // Backend se Chat request: yahan ?action=chat aur &msg= bhej rahe hain
+            const response = await fetch(`/?action=chat&msg=${encodeURIComponent(text)}`);
             const data = await response.json();
-
-            // 4. Bot Reply add karein
             appendMessage('bot-message', data.reply);
         } catch (error) {
-            appendMessage('bot-message', "Maaf kijiye, server se judne mein dikkat ho rahi hai.");
+            appendMessage('bot-message', "Server connection error! Kripya check karein.");
         } finally {
             typingIndicator.style.display = 'none';
         }
@@ -176,12 +181,13 @@
         div.className = `message ${className}`;
         div.innerText = text;
         chatBox.appendChild(div);
-        
-        // Scroll to bottom
         chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') sendMessage();
     }
 </script>
 
 </body>
-
 </html>
