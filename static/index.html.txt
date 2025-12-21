@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gov Scheme AI Chatbot</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #003366; /* Deep Indian Blue */
+            --accent-color: #ff9933;  /* Saffron */
+            --bg-color: #f4f7f6;
+            --chat-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #chat-container {
+            width: 100%;
+            max-width: 600px;
+            height: 90vh;
+            background: var(--chat-bg);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            border-radius: 12px;
+            overflow: hidden;
+            border-top: 5px solid var(--accent-color);
+        }
+
+        #chat-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        #chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            line-height: 1.5;
+            font-size: 0.95em;
+            position: relative;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: var(--accent-color);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background: #e9ecef;
+            color: #333;
+            border-bottom-left-radius: 2px;
+            white-space: pre-wrap; /* Preserve formatting from Gemini */
+        }
+
+        #input-area {
+            padding: 15px;
+            background: #fff;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 25px;
+            outline: none;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        /* Loading Spinner */
+        .typing {
+            font-size: 0.8em;
+            color: #888;
+            margin-left: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="chat-container">
+    <div id="chat-header">
+        <i class="fas fa-landmark"></i> Scheme Sahayak AI
+    </div>
+    
+    <div id="chat-box">
+        <div class="message bot-message">नमस्ते! मैं आपका सरकारी योजना सहायक हूँ। आपको किस तरह की योजना के बारे में जानना है? (उदा. किसान, छात्र, महिलाएं)</div>
+    </div>
+
+    <div class="typing" id="typing-indicator">AI सोच रहा है...</div>
+
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="अपनी समस्या या योजना का नाम लिखें..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<script>
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user-input');
+    const typingIndicator = document.getElementById('typing-indicator');
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') sendMessage();
+    }
+
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        // 1. User Message add karein
+        appendMessage('user-message', text);
+        userInput.value = '';
+        
+        // 2. Loading dikhayein
+        typingIndicator.style.display = 'block';
+
+        try {
+            // 3. Streamlit Backend ko call karein
+            // Humne app.py mein /?chat=... set kiya hai
+            const response = await fetch(`/?chat=${encodeURIComponent(text)}`);
+            const data = await response.json();
+
+            // 4. Bot Reply add karein
+            appendMessage('bot-message', data.reply);
+        } catch (error) {
+            appendMessage('bot-message', "Maaf kijiye, server se judne mein dikkat ho rahi hai.");
+        } finally {
+            typingIndicator.style.display = 'none';
+        }
+    }
+
+    function appendMessage(className, text) {
+        const div = document.createElement('div');
+        div.className = `message ${className}`;
+        div.innerText = text;
+        chatBox.appendChild(div);
+        
+        // Scroll to bottom
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+</script>
+
+</body>
+</html>
