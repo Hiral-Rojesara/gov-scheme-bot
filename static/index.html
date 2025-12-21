@@ -139,25 +139,26 @@
     const userInput = document.getElementById('user-input');
     const typingIndicator = document.getElementById('typing-indicator');
 
-    // Sahi URL nikalne ke liye function
-    const getBaseUrl = () => {
-        return window.location.origin;
-    };
+    // --- NAYA CODE YAHAN SE SHURU ---
 
+    // Page load hote hi AI se contact karne ke liye
     window.onload = async function() {
-        appendMessage('bot-message', "नमस्ते! सिस्टम लोड हो रहा है...");
+        appendMessage('bot-message', "नमस्ते! कृपया प्रतीक्षा करें...");
         try {
-            // Hum yahan pura URL bhej rahe hain
-            const response = await fetch(`${getBaseUrl()}/?action=init`);
-            const data = await response.json();
+            const response = await fetch("?action=init");
+            const replyText = await response.text();
             
+            // Sabse aakhri message (waiting wala) dhoond kar use AI ke asli jawab se badal dein
             const messages = chatBox.getElementsByClassName('bot-message');
-            messages[messages.length - 1].innerText = data.reply;
+            messages[messages.length - 1].innerText = replyText;
         } catch (e) {
-            console.error("Initialization failed:", e);
+            console.error("Failed to load AI response");
+            const messages = chatBox.getElementsByClassName('bot-message');
+            messages[messages.length - 1].innerText = "माफ कीजिये, सिस्टम लोड नहीं हो पाया। कृपया पेज रिफ्रेश करें।";
         }
     };
 
+    // Message bhejne ke liye
     async function sendMessage() {
         const text = userInput.value.trim();
         if (!text) return;
@@ -167,20 +168,32 @@
         typingIndicator.style.display = 'block';
 
         try {
-            // Hum yahan pura URL bhej rahe hain
-            const response = await fetch(`${getBaseUrl()}/?action=chat&msg=${encodeURIComponent(text)}`);
-            const data = await response.json();
-            appendMessage('bot-message', data.reply);
+            // Backend ko message bhejna
+            const response = await fetch(`?action=chat&msg=${encodeURIComponent(text)}`);
+            const replyText = await response.text();
+            appendMessage('bot-message', replyText);
         } catch (error) {
-            appendMessage('bot-message', "Connection error! Please restart the app.");
+            appendMessage('bot-message', "सर्वर से संपर्क नहीं हो पा रहा है। कृपया अपना इंटरनेट चेक करें।");
         } finally {
             typingIndicator.style.display = 'none';
         }
     }
 
-    // Baaki appendMessage aur handleKeyPress wahi rahenge
-</script>
+    // --- NAYA CODE YAHAN KHATAM ---
 
+    function appendMessage(className, text) {
+        const div = document.createElement('div');
+        div.className = `message ${className}`;
+        div.innerText = text;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') sendMessage();
+    }
+</script>
 </body>
 </html>
+
 
