@@ -205,12 +205,19 @@ if "action" in params:
 
 # 5. UI Hosting
 st.set_page_config(page_title="Gov Scheme Bot", layout="centered")
+
+# Sabse upar ye line add karein taaki error na aaye
+if "initialized" not in st.session_state:
+    st.session_state.initialized = False
+
 current_dir = os.path.dirname(__file__)
 html_path = os.path.join(current_dir, "static", "index.html")
 
 if os.path.exists(html_path):
     with open(html_path, "r", encoding="utf-8") as f:
-        st.components.v1.html(f.read(), height=800, scrolling=True)
+        html_code = f.read()
+        # Height aur width fix karein
+        st.components.v1.html(html_code, height=700)
 else:
     st.error("static/index.html nahi mili!")
 
